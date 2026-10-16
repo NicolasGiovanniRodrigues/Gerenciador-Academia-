@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, ses
 import fdb
 from flask_bcrypt import Bcrypt
 from datetime import date
+from getpass import getpass
 import os
 import secrets
 
@@ -34,6 +35,51 @@ def conectar():
     # Usa os dados mais recentes que foram salvos no banco
     con.default_tpb = fdb.ISOLATION_LEVEL_READ_COMMITED
     return con
+
+
+# Explica o erro de senha do Firebird sem confundir com a senha do site.
+def mensagem_firebird(erro):
+    # 335544472 é o código de usuário ou senha recusados pelo Firebird.
+    if 335544472 in erro.args:
+        return (
+            'O Firebird recusou o usuário ou a senha do banco. Pare o programa e '
+            'execute main.py novamente para informar os dados no terminal. '
+            'Use a senha definida na instalação do Firebird, não a senha do site.'
+        )
+    return (
+        'Não foi possível concluir o cadastro no Firebird. Confira se BANCO.FDB '
+        'está na pasta de main.py e consulte o erro no terminal.'
+    )
+
+
+# Testa o banco antes de abrir o site e permite corrigir a senha uma vez.
+def preparar_conexao():
+    for tentativa in range(2):
+        try:
+            con = conectar()
+            con.close()
+            return True
+        except fdb.DatabaseError as erro:
+            print('Erro na conexão com o Firebird:', erro)
+            if 335544472 not in erro.args or tentativa == 1:
+                print(mensagem_firebird(erro))
+                return False
+
+            print('Informe os dados usados na instalação do Firebird.')
+            print('A senha não é a senha de acesso ao site e não será salva em arquivo.')
+            usuario = os.getenv('DB_USER', 'SYSDBA')
+            try:
+                informado = input('Usuário do Firebird [' + usuario + ']: ').strip()
+                if informado:
+                    usuario = informado
+                senha = getpass('Senha do Firebird (digitação oculta): ')
+            except (EOFError, KeyboardInterrupt):
+                print('Entrada cancelada. Execute python main.py em um terminal para informar os dados.')
+                return False
+            os.environ['DB_USER'] = usuario
+            os.environ['DB_PASSWORD'] = senha
+
+    return False
 
 
 # Organiza os resultados da consulta para as páginas HTML
@@ -274,11 +320,7 @@ def cadastro():
             flash('Este e-mail ou CPF já está cadastrado.', 'erro')
         except fdb.DatabaseError as erro:
             print('Erro no cadastro:', erro)
-            flash(
-                'Não foi possível concluir o cadastro no Firebird. Confira se BANCO.FDB '
-                'está na pasta de main.py e consulte o erro no terminal.',
-                'erro',
-            )
+            flash(mensagem_firebird(erro), 'erro')
     return render_template(
         'cadastro.html',
         nascimento_maximo=limite_nascimento().isoformat(),
@@ -1669,19 +1711,24 @@ def pagina_erro(erro):
 @app.errorhandler(fdb.DatabaseError)
 def erro_banco(erro):
     print('Erro no Firebird:', erro)
-    mensagem = {
-        'code': 500,
-        'description': 'Não foi possível concluir a operação no banco de dados. Confira o erro no terminal.'
-    }
+    codigo = 500
+    descricao = 'Não foi possível concluir a operação no banco de dados. Confira o erro no terminal.'
+    if 335544472 in erro.args:
+        codigo = 503
+        descricao = mensagem_firebird(erro)
+    mensagem = {'code': codigo, 'description': descricao}
     return render_template(
         'erro.html',
         usuario=None,
         perfis=PERFIS,
         csrf_token=token_formulario(),
         erro=mensagem,
-    ), 500
+    ), codigo
 
 
 # Inicia o sistema
 if __name__ == '__main__':
-    app.run()
+    if preparar_conexao():
+        app.run()
+    else:
+        raise SystemExit(1)
