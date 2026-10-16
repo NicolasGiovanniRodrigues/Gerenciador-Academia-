@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Início</h1>
+    <p class="subtitle">Olá, {{ usuario.nome }}! Uma visão geral da academia para organizar seu dia.</p>
+    <div class="stats">
+        <a class="stat" href="{{ url_for('usuarios',perfil='ALUNO') }}">
+            <span>Alunos cadastrados</span>
+            <strong>{{ contagens.ALUNO }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('usuarios',perfil='PERSONAL') }}">
+            <span>Professores</span>
+            <strong>{{ contagens.PERSONAL }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('aulas') }}">
+            <span>Aulas hoje</span>
+            <strong>{{ aulas|selectattr('data_aula','equalto',hoje)|list|length }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('modalidades') }}">
+            <span>Modalidades</span>
+            <strong>{{ modalidades }}</strong>
+        </a>
+    </div>
+    <section class="card upcoming">
+        <div class="section-heading">
+            <h2>Próximas aulas</h2>
+            <a href="{{ url_for('aulas') }}">Ver todas as aulas →</a>
+        </div>
+        <p class="help">Aulas agendadas a partir de hoje</p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data / Horário</th>
+                        <th>Aula</th>
+                        <th>Local</th>
+                        <th>Inscritos / Vagas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in aulas[:5] %}
+                        <tr>
+                            <td data-label="Data / Horário">
+                                {{ a.data_aula.strftime("%d/%m/%Y") }}
+                                <small>{{ a.hora_inicio.strftime("%H:%M") }}–{{ a.hora_fim.strftime("%H:%M") }}</small>
+                            </td>
+                            <td data-label="Aula">
+                                <a href="{{ url_for('aula_detalhes',id_aula=a.id_aula) }}">{{ a.nome }}</a>
+                                <small>{{ a.professor }}</small>
+                            </td>
+                            <td data-label="Local">{{ a.local_aula }}</td>
+                            <td data-label="Inscritos / Vagas">
+                                <span class="badge">{{ a.inscritos }} / {{ a.capacidade }}</span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="empty">
+                                Nenhuma aula agendada.
+                                <a href="{{ url_for('aula_form') }}">Criar aula</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

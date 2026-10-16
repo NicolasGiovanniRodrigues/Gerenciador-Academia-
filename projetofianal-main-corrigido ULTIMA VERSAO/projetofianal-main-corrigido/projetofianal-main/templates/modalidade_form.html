@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back" href="{{ url_for('modalidades') }}">← Voltar para modalidades</a>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitle">Campos com * são obrigatórios.</p>
+    <section class="card">
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-grid one">
+                <label>
+                    Nome da modalidade *
+                    <input name="nome"
+                           maxlength="100"
+                           required
+                           placeholder="Ex.: Pilates"
+                           value="{{ request.form.get('nome',item.nome|default('')) }}">
+                </label>
+                <label>
+                    Descrição *
+                    <textarea name="descricao" maxlength="500" rows="3" required placeholder="Ex.: Fortalecimento, postura e mobilidade.">
+{{ request.form.get('descricao',item.descricao|default('')) }}
+</textarea>
+                </label>
+                <label>
+                    Duração padrão (minutos) *
+                    <input type="number"
+                           name="duracao"
+                           min="1"
+                           step="1"
+                           required
+                           value="{{ request.form.get('duracao',item.duracao|default(50)) }}">
+                </label>
+                <label>
+                    Situação
+                    <select name="ativa">
+                        <option value="1"
+                                {{ 'selected' if request.form.get('ativa',item.ativa|default(1)|string)=='1' else '' }}>
+                            Ativa
+                        </option>
+                        <option value="0"
+                                {{ 'selected' if request.form.get('ativa',item.ativa|default(1)|string)=='0' else '' }}>
+                            Inativa
+                        </option>
+                    </select>
+                </label>
+            </div>
+            <div class="form-actions">
+                <a class="button outline" href="{{ url_for('modalidades') }}">Cancelar</a>
+                <button class="button primary">{{ 'Salvar alterações' if item else 'Cadastrar modalidade' }}</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

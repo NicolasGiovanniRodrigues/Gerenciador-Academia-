@@ -1,0 +1,3 @@
+{% for categoria,mensagem in get_flashed_messages(with_categories=true) %}
+    <div class="message {{ categoria }}" role="status">{{ mensagem }}</div>
+{% endfor %}

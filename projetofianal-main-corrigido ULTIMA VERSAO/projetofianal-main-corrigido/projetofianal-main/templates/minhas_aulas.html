@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Minhas Aulas</h1>
+    <p class="subtitle">Olá, {{ usuario.nome }}! Acompanhe seus treinos e gerencie suas inscrições.</p>
+    <div class="class-grid">
+        {% for a in aulas %}
+            <article class="card class-card">
+                <span class="badge">{{ a.situacao|capitalize }}</span>
+                <h2>{{ a.nome }}</h2>
+                <p>{{ a.modalidade }} · {{ a.professor }}</p>
+                <p>
+                    {{ a.data_aula.strftime("%d/%m/%Y") }} · {{ a.hora_inicio.strftime("%H:%M") }}–{{ a.hora_fim.strftime("%H:%M") }}
+                </p>
+                <div class="row-actions">
+                    <a href="{{ url_for('aula_detalhes',id_aula=a.id_aula) }}">Ver detalhes</a>
+                    <a class="danger-link"
+                       href="{{ url_for('cancelar_inscricao',id_aula=a.id_aula) }}">Cancelar inscrição</a>
+                </div>
+            </article>
+        {% else %}
+            <section class="card empty">
+                <h2>Você ainda não tem aulas inscritas.</h2>
+                <a href="{{ url_for('aluno') }}">Explorar grade de aulas</a>
+            </section>
+        {% endfor %}
+    </div>
+{% endblock %}

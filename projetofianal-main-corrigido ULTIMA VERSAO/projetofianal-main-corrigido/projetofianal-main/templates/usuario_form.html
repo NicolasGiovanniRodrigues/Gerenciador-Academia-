@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back"
+       href="{{ url_for('perfil') if proprio else url_for('usuarios',perfil=request.args.get('perfil','ALUNO')) }}">
+        ← Voltar
+    </a>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitle">Atualize os dados cadastrais. Campos com * são obrigatórios.</p>
+    <section class="card">
+        <h2>Dados pessoais</h2>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-grid">
+                <label>
+                    Nome completo *
+                    <input name="nome"
+                           maxlength="254"
+                           required
+                           value="{{ request.form.get('nome',pessoa.nome|default('')) }}">
+                </label>
+                <label>
+                    E-mail *
+                    <input type="email"
+                           name="email"
+                           maxlength="100"
+                           required
+                           value="{{ request.form.get('email',pessoa.email|default('')) }}">
+                </label>
+                <label>
+                    Telefone
+                    <input name="telefone"
+                           type="tel"
+                           maxlength="20"
+                           value="{{ request.form.get('telefone',pessoa.telefone|default('',true)) }}">
+                </label>
+                <label>
+                    CPF
+                    <input name="cpf"
+                           maxlength="14"
+                           value="{{ request.form.get('cpf',pessoa.cpf|default('',true)) }}">
+                </label>
+                <label>
+                    Data de nascimento
+                    <input type="date"
+                           name="data_nascimento"
+                           value="{{ request.form.get('data_nascimento',pessoa.data_nascimento|string if pessoa.data_nascimento else '') }}">
+                </label>
+                {% if not proprio %}
+                    <label>
+                        Perfil *
+                        <select name="tipo_usuario">
+                            {% for cod,rotulo in perfis.items() %}
+                                <option value="{{ cod }}"
+                                        {{ 'selected' if request.form.get('tipo_usuario',pessoa.tipo_usuario|default(request.args.get('perfil','ALUNO')))==cod else '' }}>
+                                    {{ rotulo }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        Situação
+                        <select name="ativo">
+                            <option value="1"
+                                    {{ 'selected' if request.form.get('ativo',pessoa.ativo|default(1)|string)=='1' else '' }}>
+                                Ativo
+                            </option>
+                            <option value="0"
+                                    {{ 'selected' if request.form.get('ativo',pessoa.ativo|default(1)|string)=='0' else '' }}>
+                                Inativo
+                            </option>
+                        </select>
+                    </label>
+                    <label>
+                        Bloqueio de login
+                        <select name="bloqueado">
+                            <option value="0"
+                                    {{ 'selected' if request.form.get('bloqueado',pessoa.bloqueado|default(0)|string)=='0' else '' }}>
+                                Liberado
+                            </option>
+                            <option value="1"
+                                    {{ 'selected' if request.form.get('bloqueado',pessoa.bloqueado|default(0)|string)=='1' else '' }}>
+                                Bloqueado
+                            </option>
+                        </select>
+                    </label>
+                    <label>
+                        Tentativas de login
+                        <input name="tentativas_login"
+                               type="number"
+                               min="0"
+                               value="{{ request.form.get('tentativas_login',pessoa.tentativas_login|default(0)) }}">
+                    </label>
+                    <label>
+                        {{ 'Nova senha (opcional)' if pessoa else 'Senha *' }}
+                        <input name="senha"
+                               type="password"
+                               minlength="8"
+                               autocomplete="new-password"
+                               {{ 'required' if not pessoa else '' }}>
+                        <small>8 ou mais caracteres: maiúscula, minúscula, número e símbolo.</small>
+                    </label>
+                {% endif %}
+            </div>
+            <div class="form-actions">
+                <a class="button outline"
+                   href="{{ url_for('perfil') if proprio else url_for('usuarios',perfil=request.args.get('perfil','ALUNO')) }}">
+                    Cancelar
+                </a>
+                <button class="button primary">Salvar alterações</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Grade de Aulas</h1>
+    <p class="subtitle">Olá, {{ usuario.nome }}! Escolha uma aula para se inscrever.</p>
+    <div class="class-grid">
+        {% for a in aulas %}
+            <article class="card class-card">
+                <span class="badge">{{ a.modalidade }}</span>
+                <h2>{{ a.nome }}</h2>
+                <p>Professor: {{ a.professor }}</p>
+                <p>
+                    {{ a.data_aula.strftime("%d/%m/%Y") }} · {{ a.hora_inicio.strftime("%H:%M") }}–{{ a.hora_fim.strftime("%H:%M") }}
+                </p>
+                <p>{{ a.local_aula }}</p>
+                <p>{{ a.capacidade-a.inscritos }} vagas disponíveis de {{ a.capacidade }}</p>
+                <a class="button {{ 'outline' if a.inscritos>=a.capacidade else 'primary' }}"
+                   href="{{ url_for('aula_detalhes',id_aula=a.id_aula) }}">
+                    {{ 'Aula lotada · Ver detalhes' if a.inscritos>=a.capacidade else 'Ver aula / Inscrever-se' }}
+                </a>
+            </article>
+        {% else %}
+            <section class="card empty">
+                Nenhuma aula disponível no momento.
+            </section>
+        {% endfor %}
+    </div>
+{% endblock %}

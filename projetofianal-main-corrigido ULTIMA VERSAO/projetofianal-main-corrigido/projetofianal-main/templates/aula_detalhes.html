@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back" href="{{ url_for('voltar_home') }}">← Voltar para aulas</a>
+    <h1>Detalhes da aula</h1>
+    <p class="subtitle">Confira as informações e a disponibilidade desta turma.</p>
+    <section class="card">
+        <span class="badge">{{ 'Lotada' if aula.inscritos>=aula.capacidade else aula.situacao|capitalize }}</span>
+        <h2>{{ aula.nome }}</h2>
+        <dl class="details">
+            <div>
+                <dt>Modalidade</dt>
+                <dd>
+                    {{ aula.modalidade }}
+                </dd>
+            </div>
+            <div>
+                <dt>Professor</dt>
+                <dd>
+                    {{ aula.professor }}
+                </dd>
+            </div>
+            <div>
+                <dt>Data</dt>
+                <dd>
+                    {{ aula.data_aula.strftime("%d/%m/%Y") }}
+                </dd>
+            </div>
+            <div>
+                <dt>Horário</dt>
+                <dd>
+                    {{ aula.hora_inicio.strftime("%H:%M") }}–{{ aula.hora_fim.strftime("%H:%M") }}
+                </dd>
+            </div>
+            <div>
+                <dt>Local</dt>
+                <dd>
+                    {{ aula.local_aula }}
+                </dd>
+            </div>
+            <div>
+                <dt>Vagas</dt>
+                <dd>
+                    {{ aula.capacidade-aula.inscritos }} disponíveis · {{ aula.inscritos }} / {{ aula.capacidade }} inscritos
+                </dd>
+            </div>
+        </dl>
+        {% if usuario.tipo_usuario=="ALUNO" %}
+            {% if inscricao %}
+                <a class="button outline"
+                   href="{{ url_for('cancelar_inscricao',id_aula=aula.id_aula) }}">Cancelar inscrição</a>
+            {% elif aula.situacao=="AGENDADA" and aula.data_aula>=hoje and aula.inscritos<aula.capacidade %}
+                <form method="post"
+                      action="{{ url_for('inscrever',id_aula=aula.id_aula) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button class="button primary">Confirmar inscrição</button>
+                </form>
+            {% else %}
+                <p class="message">Inscrição indisponível para esta aula.</p>
+            {% endif %}
+        {% else %}
+            <h2>Alunos inscritos</h2>
+            <ul class="simple-list">
+                {% for i in inscritos %}
+                    <li>
+                        {{ i.nome }}
+                        <span>{{ 'Presente' if i.presente==1 else 'Ausente' if i.presente==0 else 'Chamada pendente' }}</span>
+                    </li>
+                {% else %}
+                    <li>Nenhum inscrito.</li>
+                {% endfor %}
+            </ul>
+            <a class="button primary"
+               href="{{ url_for('chamada',id_aula=aula.id_aula) }}">Registrar presenças</a>
+        {% endif %}
+    </section>
+{% endblock %}

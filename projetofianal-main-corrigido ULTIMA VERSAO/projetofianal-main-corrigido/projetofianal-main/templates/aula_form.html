@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back" href="{{ url_for('aulas') }}">← Voltar para aulas</a>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitle">Organize uma aula vinculada à agenda de um professor.</p>
+    <section class="card">
+        <h2>Informações da aula</h2>
+        <p class="help">Campos com * são obrigatórios. Apenas modalidades e professores ativos podem ser selecionados.</p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-grid">
+                <label>
+                    Nome da aula *
+                    <input name="nome"
+                           maxlength="100"
+                           required
+                           value="{{ request.form.get('nome',item.nome|default('')) }}"
+                           placeholder="Ex.: Spinning Noturno">
+                </label>
+                <label>
+                    Modalidade *
+                    <select name="id_modalidade" required>
+                        <option value="">Selecione</option>
+                        {% for m in modalidades %}
+                            <option value="{{ m.id_modalidade }}"
+                                    {{ 'selected' if request.form.get('id_modalidade',item.id_modalidade|default('')|string)==m.id_modalidade|string else '' }}>
+                                {{ m.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Professor responsável *
+                    <select name="id_professor" required>
+                        <option value="">Selecione</option>
+                        {% for p in professores %}
+                            <option value="{{ p.id_usuario }}"
+                                    {{ 'selected' if request.form.get('id_professor',item.id_professor|default('')|string)==p.id_usuario|string else '' }}>
+                                {{ p.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Data *
+                    <input type="date"
+                           name="data_aula"
+                           required
+                           value="{{ request.form.get('data_aula',item.data_aula|string if item else '') }}">
+                </label>
+                <label>
+                    Horário inicial *
+                    <input type="time"
+                           name="hora_inicio"
+                           required
+                           value="{{ request.form.get('hora_inicio',item.hora_inicio.strftime('%H:%M') if item else '') }}">
+                </label>
+                <label>
+                    Horário final *
+                    <input type="time"
+                           name="hora_fim"
+                           required
+                           value="{{ request.form.get('hora_fim',item.hora_fim.strftime('%H:%M') if item else '') }}">
+                </label>
+                <label>
+                    Capacidade de alunos *
+                    <input type="number"
+                           name="capacidade"
+                           min="1"
+                           step="1"
+                           required
+                           value="{{ request.form.get('capacidade',item.capacidade|default('')) }}">
+                </label>
+                <label>
+                    Local *
+                    <input name="local"
+                           maxlength="100"
+                           required
+                           value="{{ request.form.get('local',item.local_aula|default('')) }}"
+                           placeholder="Ex.: Sala 1">
+                </label>
+            </div>
+            <div class="form-actions">
+                <a class="button outline" href="{{ url_for('aulas') }}">Cancelar</a>
+                <button class="button primary">{{ 'Salvar alterações' if item else 'Criar aula' }}</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

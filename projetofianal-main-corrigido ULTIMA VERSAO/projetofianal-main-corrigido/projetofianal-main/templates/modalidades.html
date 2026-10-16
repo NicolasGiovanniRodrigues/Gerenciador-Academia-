@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Modalidades</h1>
+    <p class="subtitle">Gerencie as modalidades, os professores e as aulas da academia.</p>
+    <section class="card">
+        <div class="toolbar">
+            <a class="button primary" href="{{ url_for('modalidade_form') }}">+ Nova modalidade</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modalidade e descrição</th>
+                        <th>Duração</th>
+                        <th>Situação</th>
+                        <th>Aulas</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in modalidades %}
+                        <tr>
+                            <td data-label="Modalidade">
+                                <strong>{{ m.nome }}</strong>
+                                <small>{{ m.descricao }}</small>
+                            </td>
+                            <td data-label="Duração">{{ m.duracao }} min</td>
+                            <td data-label="Situação">
+                                <span class="badge {{ 'inactive' if not m.ativa else '' }}">{{ 'Ativa' if m.ativa else 'Inativa' }}</span>
+                            </td>
+                            <td data-label="Aulas">{{ m.total_aulas }} aula(s)</td>
+                            <td data-label="Ações">
+                                <div class="row-actions">
+                                    <a href="{{ url_for('modalidade_form',id_modalidade=m.id_modalidade) }}">Editar</a>
+                                    <a class="danger-link"
+                                       href="{{ url_for('modalidade_excluir',id_modalidade=m.id_modalidade) }}">
+                                        Excluir
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="empty">Nenhuma modalidade cadastrada.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

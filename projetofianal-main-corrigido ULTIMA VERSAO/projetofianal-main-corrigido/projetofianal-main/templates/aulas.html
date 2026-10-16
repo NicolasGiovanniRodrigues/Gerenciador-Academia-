@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>{{ titulo }}</h1>
+            <p class="subtitle">
+                {{ 'Organize a agenda, os professores e as vagas da academia.' if usuario.tipo_usuario=='ADMINISTRADOR' else 'Olá, '+usuario.nome+'! Consulte suas aulas e registre presenças.' }}
+            </p>
+        </div>
+        {% if usuario.tipo_usuario=="ADMINISTRADOR" %}
+            <a class="button primary" href="{{ url_for('aula_form') }}">+ Criar aula</a>
+        {% endif %}
+    </div>
+    <section class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aula</th>
+                        <th>Professor</th>
+                        <th>Data / Horário</th>
+                        <th>Vagas</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in aulas %}
+                        <tr>
+                            <td data-label="Aula">
+                                <strong>{{ a.nome }}</strong>
+                                <small>{{ a.modalidade }} · {{ a.local_aula }}</small>
+                            </td>
+                            <td data-label="Professor">{{ a.professor }}</td>
+                            <td data-label="Data / Horário">
+                                {{ a.data_aula.strftime("%d/%m/%Y") }}
+                                <small>{{ a.hora_inicio.strftime("%H:%M") }}–{{ a.hora_fim.strftime("%H:%M") }}</small>
+                            </td>
+                            <td data-label="Vagas">
+                                <span class="badge">{{ a.inscritos }} / {{ a.capacidade }}</span>
+                            </td>
+                            <td data-label="Situação">{{ a.situacao|capitalize }}</td>
+                            <td data-label="Ações">
+                                <div class="row-actions">
+                                    <a href="{{ url_for('aula_detalhes',id_aula=a.id_aula) }}">Detalhes</a>
+                                    {% if usuario.tipo_usuario=="ADMINISTRADOR" %}
+                                        <a href="{{ url_for('aula_form',id_aula=a.id_aula) }}">Editar</a>
+                                    {% endif %}
+                                    <a href="{{ url_for('chamada',id_aula=a.id_aula) }}">Chamada</a>
+                                    {% if usuario.tipo_usuario=="ADMINISTRADOR" and a.situacao=="AGENDADA" %}
+                                        <a href="{{ url_for('aula_cancelar',id_aula=a.id_aula) }}"
+                                           class="danger-link">Cancelar</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="empty">Nenhuma aula cadastrada.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

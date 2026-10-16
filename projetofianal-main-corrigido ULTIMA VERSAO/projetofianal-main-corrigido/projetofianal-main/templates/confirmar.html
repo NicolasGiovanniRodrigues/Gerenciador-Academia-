@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back" href="{{ voltar }}">← Voltar</a>
+    <h1>{{ titulo }}</h1>
+    <section class="card confirmation">
+        <h2>{{ mensagem }}</h2>
+        <p>Revise os dados antes de confirmar a operação.</p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-actions">
+                <a class="button outline" href="{{ voltar }}">Manter / voltar</a>
+                <button class="button primary" type="submit">{{ botao }}</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back"
+       href="{{ url_for('aula_detalhes',id_aula=aula.id_aula) }}">← Voltar à aula</a>
+    <h1>Alunos e Presenças</h1>
+    <p class="subtitle">{{ aula.nome }} · {{ aula.data_aula.strftime("%d/%m/%Y") }} · {{ aula.professor }}</p>
+    <section class="card">
+        <h2>Lista de chamada</h2>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Presença</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in inscritos %}
+                            <tr>
+                                <td data-label="Aluno">{{ i.nome }}</td>
+                                <td data-label="Presença">
+                                    <select name="presenca_{{ i.id_inscricao }}"
+                                            aria-label="Presença de {{ i.nome }}">
+                                        <option value="">Não registrada</option>
+                                        <option value="1" {{ 'selected' if i.presente==1 else '' }}>Presente</option>
+                                        <option value="0" {{ 'selected' if i.presente==0 else '' }}>Ausente</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="2" class="empty">Nenhum aluno inscrito.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if inscritos %}
+                <div class="form-actions">
+                    <button class="button primary">Salvar chamada</button>
+                </div>
+            {% endif %}
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>{{ titulo }}</h1>
+    <p class="subtitle">Acompanhe seus dados e a segurança da sua conta.</p>
+    <section class="card">
+        <div class="profile-heading">
+            <div class="avatar">{{ usuario.nome[:2]|upper }}</div>
+            <div>
+                <h2>{{ usuario.nome }}</h2>
+                <p>{{ perfis[usuario.tipo_usuario] }} · {{ 'Ativo' if usuario.ativo else 'Inativo' }}</p>
+            </div>
+        </div>
+        <dl class="details">
+            <div>
+                <dt>E-mail</dt>
+                <dd>
+                    {{ usuario.email }}
+                </dd>
+            </div>
+            <div>
+                <dt>Telefone</dt>
+                <dd>
+                    {{ usuario.telefone or 'Não informado' }}
+                </dd>
+            </div>
+            <div>
+                <dt>CPF</dt>
+                <dd>
+                    {{ usuario.cpf or 'Não informado' }}
+                </dd>
+            </div>
+            <div>
+                <dt>Nascimento</dt>
+                <dd>
+                    {{ usuario.data_nascimento.strftime("%d/%m/%Y") if usuario.data_nascimento else 'Não informado' }}
+                </dd>
+            </div>
+        </dl>
+        <div class="form-actions">
+            <a class="button outline" href="{{ url_for('alterar_senha') }}">Alterar senha</a>
+            <a class="button primary" href="{{ url_for('editar_dados') }}">Editar dados</a>
+        </div>
+    </section>
+{% endblock %}

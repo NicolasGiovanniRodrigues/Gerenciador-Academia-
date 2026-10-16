@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Login — Automatic Fit</title>
+        <link rel="stylesheet"
+              href="{{ url_for('static',filename='css/app.css') }}">
+    </head>
+    <body class="auth-body">
+        <main class="auth-layout">
+            <section class="auth-brand">
+                <a href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static',filename='img/logo.png') }}"
+                         alt="Automatic Fit">
+                </a>
+                <h1>
+                    Automatic
+                    <b>
+                        Fit
+                    </b>
+                </h1>
+                <p>
+                    Gerencie aulas, horários e inscrições com
+                    <br>
+                    praticidade.
+                </p>
+            </section>
+            <section class="auth-card">
+                <img class="auth-logo"
+                     src="{{ url_for('static',filename='img/logo.png') }}"
+                     alt="">
+                <h2>Bem-vindo</h2>
+                <h2>Automatic Fit</h2>
+                <p class="subtitle">Faça seu login para acessar sua conta.</p>
+                {% include "mensagens.html" %}
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label class="auth-field">
+                        <span class="sr-only">E-mail</span>
+                        <span class="field-icon">✉</span>
+                        <input type="email"
+                               name="email"
+                               placeholder="E-mail"
+                               required
+                               maxlength="100"
+                               value="{{ request.form.get('email', '') }}"
+                               autocomplete="email">
+                    </label>
+                    <label class="auth-field password-field">
+                        <span class="sr-only">Senha</span>
+                        <span class="field-icon">
+                            <img src="{{ url_for('static',filename='img/cadeado.png') }}"
+                                 width="15"
+                                 height="15"
+                                 alt="">
+                        </span>
+                        <input type="password"
+                               name="senha"
+                               placeholder="Senha"
+                               required
+                               autocomplete="current-password">
+                        <button type="button" class="show-password" aria-label="Mostrar senha">◉</button>
+                    </label>
+                    <p class="auth-link">
+                        Não tem uma conta?
+                        <a href="{{ url_for('cadastro') }}">Cadastre-se</a>
+                    </p>
+                    <button class="button primary full" type="submit">Entrar →</button>
+                </form>
+            </section>
+        </main>
+        <script src="{{ url_for('static',filename='js/app.js') }}"></script>
+    </body>
+</html>

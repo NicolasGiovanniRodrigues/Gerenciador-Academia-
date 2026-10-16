@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+    <a class="back" href="{{ url_for('perfil') }}">← Voltar ao perfil</a>
+    <h1>Alterar senha</h1>
+    <p class="subtitle">Atualize sua senha para manter sua conta protegida.</p>
+    <section class="card narrow">
+        <h2>Defina sua nova senha</h2>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-grid one">
+                <label>
+                    Senha atual
+                    <input type="password"
+                           name="senha_atual"
+                           required
+                           autocomplete="current-password">
+                </label>
+                <label>
+                    Nova senha
+                    <input type="password"
+                           name="nova_senha"
+                           minlength="8"
+                           required
+                           autocomplete="new-password">
+                </label>
+                <label>
+                    Confirmar nova senha
+                    <input type="password" name="confirmar" required autocomplete="new-password">
+                </label>
+            </div>
+            <p class="help">
+                Use pelo menos 8 caracteres: maiúscula, minúscula, número e símbolo. Não repita a senha atual nem as três últimas senhas.
+            </p>
+            <div class="form-actions">
+                <a class="button outline" href="{{ url_for('perfil') }}">Cancelar</a>
+                <button class="button primary">Salvar nova senha</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

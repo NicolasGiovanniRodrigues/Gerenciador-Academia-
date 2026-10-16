@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Olá, {{ usuario.nome }}!</h1>
+    <p class="subtitle">Veja o ritmo do dia e acompanhe seus alunos de perto.</p>
+    <p class="help">RESUMO DE HOJE</p>
+    <div class="stats">
+        <a class="stat" href="{{ url_for('agenda') }}">
+            <span>Aulas hoje</span>
+            <strong>{{ aulas|selectattr('data_aula','equalto',hoje)|list|length }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('agenda') }}">
+            <span>Aulas atribuídas</span>
+            <strong>{{ aulas|length }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('presencas') }}">
+            <span>Alunos inscritos nas aulas</span>
+            <strong>{{ aulas|sum(attribute='inscritos') }}</strong>
+        </a>
+        <a class="stat" href="{{ url_for('perfil') }}">
+            <span>Meu perfil</span>
+            <strong>→</strong>
+        </a>
+    </div>
+    <section class="card">
+        <div class="section-heading">
+            <h2>Suas aulas</h2>
+            <a href="{{ url_for('agenda') }}">Ver minha agenda →</a>
+        </div>
+        <ul class="simple-list">
+            {% for a in aulas[:5] %}
+                <li>
+                    <a href="{{ url_for('aula_detalhes',id_aula=a.id_aula) }}">{{ a.nome }}</a>
+                    <span>
+                        {{ a.data_aula.strftime("%d/%m/%Y") }} · {{ a.hora_inicio.strftime("%H:%M") }} · {{ a.inscritos }}/{{ a.capacidade }} inscritos
+                    </span>
+                </li>
+            {% else %}
+                <li>Você ainda não possui aulas atribuídas.</li>
+            {% endfor %}
+        </ul>
+        <a class="button primary" href="{{ url_for('presencas') }}">Registrar presenças</a>
+    </section>
+{% endblock %}
