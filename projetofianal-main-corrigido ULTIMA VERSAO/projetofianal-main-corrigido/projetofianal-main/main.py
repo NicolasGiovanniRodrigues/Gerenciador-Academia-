@@ -2,14 +2,12 @@ from flask import Flask, render_template, request, flash, redirect, url_for, ses
 import fdb
 from flask_bcrypt import Bcrypt
 from datetime import date
-from getpass import getpass
-import os
 import secrets
 
 
 # Inicia a aplicação
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY') or secrets.token_hex(32)
+app.secret_key = secrets.token_hex(32)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 bcrypt = Bcrypt(app)
@@ -18,20 +16,14 @@ PERFIS = {'ALUNO': 'Aluno', 'PERSONAL': 'Professor', 'ADMINISTRADOR': 'Administr
 
 # Conecta ao banco Firebird
 def conectar():
-    if os.getenv('FIREBIRD_CLIENT'):
-        fdb.load_api(os.environ['FIREBIRD_CLIENT'])
-    # Procura o banco na mesma pasta deste arquivo
-    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'BANCO.FDB')
-    if not os.path.isfile(caminho):
-        raise fdb.ProgrammingError('BANCO.FDB não encontrado na mesma pasta de main.py.')
-    # Informa os dados da conexão
     con = fdb.connect(
-        host=os.getenv('DB_HOST', 'localhost') or None,
-        database=caminho,
-        user=os.getenv('DB_USER', 'SYSDBA'),
-        password=os.getenv('DB_PASSWORD', 'sysdba'),
-        charset='UTF8',
+        host='localhost',
+        database=r'C:\Users\Aluno\Downloads\projetofianal-main\BANCO.FDB',
+        user='SYSDBA',
+        password='sysdba',  # Coloque aqui a senha do seu Firebird
+        charset='UTF8'
     )
+
     # Usa os dados mais recentes que foram salvos no banco
     con.default_tpb = fdb.ISOLATION_LEVEL_READ_COMMITED
     return con
@@ -42,44 +34,14 @@ def mensagem_firebird(erro):
     # 335544472 é o código de usuário ou senha recusados pelo Firebird.
     if 335544472 in erro.args:
         return (
-            'O Firebird recusou o usuário ou a senha do banco. Pare o programa e '
-            'execute main.py novamente para informar os dados no terminal. '
-            'Use a senha definida na instalação do Firebird, não a senha do site.'
+            'O Firebird recusou o usuário ou a senha do banco. '
+            'Confira user e password na função conectar(), no início de main.py. '
+            'Use a senha do Firebird, não a senha de acesso ao site.'
         )
     return (
-        'Não foi possível concluir o cadastro no Firebird. Confira se BANCO.FDB '
-        'está na pasta de main.py e consulte o erro no terminal.'
+        'Não foi possível concluir a operação no Firebird. '
+        'Confira o caminho do banco na função conectar() e consulte o erro no terminal.'
     )
-
-
-# Testa o banco antes de abrir o site e permite corrigir a senha uma vez.
-def preparar_conexao():
-    for tentativa in range(2):
-        try:
-            con = conectar()
-            con.close()
-            return True
-        except fdb.DatabaseError as erro:
-            print('Erro na conexão com o Firebird:', erro)
-            if 335544472 not in erro.args or tentativa == 1:
-                print(mensagem_firebird(erro))
-                return False
-
-            print('Informe os dados usados na instalação do Firebird.')
-            print('A senha não é a senha de acesso ao site e não será salva em arquivo.')
-            usuario = os.getenv('DB_USER', 'SYSDBA')
-            try:
-                informado = input('Usuário do Firebird [' + usuario + ']: ').strip()
-                if informado:
-                    usuario = informado
-                senha = getpass('Senha do Firebird (digitação oculta): ')
-            except (EOFError, KeyboardInterrupt):
-                print('Entrada cancelada. Execute python main.py em um terminal para informar os dados.')
-                return False
-            os.environ['DB_USER'] = usuario
-            os.environ['DB_PASSWORD'] = senha
-
-    return False
 
 
 # Organiza os resultados da consulta para as páginas HTML
@@ -106,10 +68,12 @@ def consultar(con, sql, parametros=(), unico=False):
 def senha_forte(senha):
     if len(senha) < 8 or len(senha.encode('utf-8')) > 72:
         return False
+
     maiuscula = False
     minuscula = False
     numero = False
     especial = False
+
     for letra in senha:
         if letra.isupper():
             maiuscula = True
@@ -119,6 +83,7 @@ def senha_forte(senha):
             numero = True
         if not letra.isalnum() and (not letra.isspace()):
             especial = True
+
     return maiuscula and minuscula and numero and especial
 
 
@@ -276,6 +241,7 @@ def index():
 def cadastro():
     conferir_formulario()
     if request.method == 'POST':
+        con = None
         try:
             # Confere os dados informados
             nome, email, telefone, cpf, nascimento = ler_pessoa(request.form)
@@ -283,44 +249,47 @@ def cadastro():
             if senha != request.form.get('confirmar_senha'):
                 raise ValueError('As senhas não coincidem.')
             con = conectar()
-            try:
-                if consultar(
-                    con,
-                    'SELECT ID_USUARIO FROM USUARIOS WHERE LOWER(TRIM(EMAIL))=?',
-                    (email,),
-                    True,
-                ):
-                    raise ValueError('Este e-mail já está cadastrado.')
-                hash_senha = validar_nova_senha(con, None, senha)
-                cursor = con.cursor()
+            if consultar(
+                con,
+                'SELECT ID_USUARIO FROM USUARIOS WHERE LOWER(TRIM(EMAIL))=?',
+                (email,),
+                True,
+            ):
+                raise ValueError('Este e-mail já está cadastrado.')
+            hash_senha = validar_nova_senha(con, None, senha)
+            cursor = con.cursor()
 
-                # Cadastra o usuário
-                cursor.execute(
-                    '''
-                    INSERT INTO USUARIOS (
-                        NOME, EMAIL, TELEFONE, CPF, DATA_NASCIMENTO,
-                        SENHA, TIPO_USUARIO, ATIVO, BLOQUEADO, TENTATIVAS_LOGIN
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, 'ALUNO', 1, 0, 0)
-                    ''',
-                    (nome, email, telefone, cpf, nascimento, hash_senha),
+            # Cadastra o usuário
+            cursor.execute(
+                '''
+                INSERT INTO USUARIOS (
+                    NOME, EMAIL, TELEFONE, CPF, DATA_NASCIMENTO,
+                    SENHA, TIPO_USUARIO, ATIVO, BLOQUEADO, TENTATIVAS_LOGIN
                 )
+                VALUES (?, ?, ?, ?, ?, ?, 'ALUNO', 1, 0, 0)
+                ''',
+                (nome, email, telefone, cpf, nascimento, hash_senha),
+            )
 
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+            con.commit()
             flash('Cadastro realizado com sucesso! Faça seu login.', 'sucesso')
             return redirect(url_for('login'))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
         except fdb.IntegrityError:
+            if con is not None:
+                con.rollback()
             flash('Este e-mail ou CPF já está cadastrado.', 'erro')
         except fdb.DatabaseError as erro:
+            if con is not None:
+                con.rollback()
             print('Erro no cadastro:', erro)
             flash(mensagem_firebird(erro), 'erro')
+        finally:
+            if con is not None:
+                con.close()
     return render_template(
         'cadastro.html',
         nascimento_maximo=limite_nascimento().isoformat(),
@@ -650,48 +619,50 @@ def editar_dados():
     conferir_formulario()
 
     if request.method == 'POST':
+        con = None
         try:
             # Confere os dados informados
             valores = ler_pessoa(request.form)
             con = conectar()
-            try:
-                if consultar(
-                    con,
-                    '''
-                        SELECT ID_USUARIO
-                        FROM USUARIOS
-                        WHERE LOWER(TRIM(EMAIL))=?
-                            AND ID_USUARIO<>?
-                    ''',
-                    (valores[1], usuario['id_usuario']),
-                    True,
-                ):
-                    raise ValueError('Este e-mail já está cadastrado.')
-                cursor = con.cursor()
-                cursor.execute(
-                    '''
-                        UPDATE USUARIOS
-                        SET NOME=?,
-                            EMAIL=?,
-                            TELEFONE=?,
-                            CPF=?,
-                            DATA_NASCIMENTO=?
-                        WHERE ID_USUARIO=?
-                    ''',
-                    (valores[0], valores[1], valores[2], valores[3], valores[4], usuario['id_usuario']),
-                )
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+            if consultar(
+                con,
+                '''
+                    SELECT ID_USUARIO
+                    FROM USUARIOS
+                    WHERE LOWER(TRIM(EMAIL))=?
+                        AND ID_USUARIO<>?
+                ''',
+                (valores[1], usuario['id_usuario']),
+                True,
+            ):
+                raise ValueError('Este e-mail já está cadastrado.')
+            cursor = con.cursor()
+            cursor.execute(
+                '''
+                    UPDATE USUARIOS
+                    SET NOME=?,
+                        EMAIL=?,
+                        TELEFONE=?,
+                        CPF=?,
+                        DATA_NASCIMENTO=?
+                    WHERE ID_USUARIO=?
+                ''',
+                (valores[0], valores[1], valores[2], valores[3], valores[4], usuario['id_usuario']),
+            )
+            con.commit()
             flash('Dados atualizados com sucesso!', 'sucesso')
             return redirect(url_for('perfil'))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
         except fdb.IntegrityError:
+            if con is not None:
+                con.rollback()
             flash('E-mail ou CPF já cadastrado.', 'erro')
+        finally:
+            if con is not None:
+                con.close()
     return render_template(
         'usuario_form.html',
         nascimento_maximo=limite_nascimento().isoformat(),
@@ -714,6 +685,7 @@ def alterar_senha():
     conferir_formulario()
 
     if request.method == 'POST':
+        con = None
         try:
             if not conferir_senha(
                 usuario['senha'], request.form.get('senha_atual', '')
@@ -723,24 +695,23 @@ def alterar_senha():
             if nova != request.form.get('confirmar', ''):
                 raise ValueError('As novas senhas não coincidem.')
             con = conectar()
-            try:
-                hash_senha = validar_nova_senha(con, usuario['id_usuario'], nova)
-                guardar_senha(con, usuario['id_usuario'], usuario['senha'])
-                cursor = con.cursor()
-                cursor.execute(
-                    'UPDATE USUARIOS SET SENHA=? WHERE ID_USUARIO=?',
-                    (hash_senha, usuario['id_usuario']),
-                )
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+            hash_senha = validar_nova_senha(con, usuario['id_usuario'], nova)
+            guardar_senha(con, usuario['id_usuario'], usuario['senha'])
+            cursor = con.cursor()
+            cursor.execute(
+                'UPDATE USUARIOS SET SENHA=? WHERE ID_USUARIO=?',
+                (hash_senha, usuario['id_usuario']),
+            )
+            con.commit()
             flash('Senha alterada com sucesso!', 'sucesso')
             return redirect(url_for('perfil'))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
+        finally:
+            if con is not None:
+                con.close()
     return render_template(
         'alterar_senha.html',
         usuario=usuario,
@@ -812,6 +783,7 @@ def usuario_form(id_usuario=None):
     finally:
         con.close()
     if request.method == 'POST':
+        con = None
         try:
             # Confere os dados informados
             valores = ler_pessoa(request.form)
@@ -828,85 +800,86 @@ def usuario_form(id_usuario=None):
                 raise ValueError('Tentativas de login inválidas.')
             senha = request.form.get('senha', '')
             con = conectar()
-            try:
-                if consultar(
-                    con,
+            if consultar(
+                con,
+                '''
+                    SELECT ID_USUARIO
+                    FROM USUARIOS
+                    WHERE LOWER(TRIM(EMAIL))=?
+                        AND ID_USUARIO<>?
+                ''',
+                (valores[1], id_usuario or 0),
+                True,
+            ):
+                raise ValueError('Este e-mail já está cadastrado.')
+            if senha or not id_usuario:
+                hash_senha = validar_nova_senha(con, id_usuario, senha)
+            else:
+                hash_senha = pessoa['senha']
+            if id_usuario:
+                cursor = con.cursor()
+                cursor.execute(
                     '''
-                        SELECT ID_USUARIO
-                        FROM USUARIOS
-                        WHERE LOWER(TRIM(EMAIL))=?
-                            AND ID_USUARIO<>?
+                        UPDATE USUARIOS
+                        SET NOME=?,
+                            EMAIL=?,
+                            TELEFONE=?,
+                            CPF=?,
+                            DATA_NASCIMENTO=?,
+                            TIPO_USUARIO=?,
+                            ATIVO=?,
+                            BLOQUEADO=?,
+                            TENTATIVAS_LOGIN=?,
+                            SENHA=?
+                        WHERE ID_USUARIO=?
                     ''',
-                    (valores[1], id_usuario or 0),
-                    True,
-                ):
-                    raise ValueError('Este e-mail já está cadastrado.')
-                if senha or not id_usuario:
-                    hash_senha = validar_nova_senha(con, id_usuario, senha)
-                else:
-                    hash_senha = pessoa['senha']
-                if id_usuario:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            UPDATE USUARIOS
-                            SET NOME=?,
-                                EMAIL=?,
-                                TELEFONE=?,
-                                CPF=?,
-                                DATA_NASCIMENTO=?,
-                                TIPO_USUARIO=?,
-                                ATIVO=?,
-                                BLOQUEADO=?,
-                                TENTATIVAS_LOGIN=?,
-                                SENHA=?
-                            WHERE ID_USUARIO=?
-                        ''',
-                        (
-                            valores[0], valores[1], valores[2], valores[3], valores[4],
-                            tipo,
-                            ativo,
-                            bloqueado,
-                            tentativas,
-                            hash_senha,
-                            id_usuario,
-                        ),
-                    )
-                    if senha:
-                        guardar_senha(con, id_usuario, pessoa['senha'])
-                else:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            INSERT INTO USUARIOS (NOME, EMAIL, TELEFONE, CPF, DATA_NASCIMENTO, TIPO_USUARIO, ATIVO, BLOQUEADO, TENTATIVAS_LOGIN, SENHA)
-                            VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING ID_USUARIO
-                        ''',
-                        (
-                            valores[0],
-                            valores[1],
-                            valores[2],
-                            valores[3],
-                            valores[4],
-                            tipo,
-                            ativo,
-                            bloqueado,
-                            tentativas,
-                            hash_senha,
-                        ),
-                    )
-                    id_usuario = cursor.fetchone()[0]
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+                    (
+                        valores[0], valores[1], valores[2], valores[3], valores[4],
+                        tipo,
+                        ativo,
+                        bloqueado,
+                        tentativas,
+                        hash_senha,
+                        id_usuario,
+                    ),
+                )
+                if senha:
+                    guardar_senha(con, id_usuario, pessoa['senha'])
+            else:
+                cursor = con.cursor()
+                cursor.execute(
+                    '''
+                        INSERT INTO USUARIOS (NOME, EMAIL, TELEFONE, CPF, DATA_NASCIMENTO, TIPO_USUARIO, ATIVO, BLOQUEADO, TENTATIVAS_LOGIN, SENHA)
+                        VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING ID_USUARIO
+                    ''',
+                    (
+                        valores[0],
+                        valores[1],
+                        valores[2],
+                        valores[3],
+                        valores[4],
+                        tipo,
+                        ativo,
+                        bloqueado,
+                        tentativas,
+                        hash_senha,
+                    ),
+                )
+                id_usuario = cursor.fetchone()[0]
+            con.commit()
             flash('Usuário salvo com sucesso!', 'sucesso')
             return redirect(url_for('usuarios', perfil=tipo))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
         except fdb.IntegrityError:
+            if con is not None:
+                con.rollback()
             flash('Este e-mail ou CPF já está cadastrado.', 'erro')
+        finally:
+            if con is not None:
+                con.close()
     titulo = 'Cadastrar usuário'
     if id_usuario:
         titulo = 'Editar usuário'
@@ -990,6 +963,7 @@ def modalidade_form(id_modalidade=None):
     if request.method == 'POST':
         nome = request.form.get('nome', '').strip()
         descricao = request.form.get('descricao', '').strip()
+        con = None
         try:
             try:
                 duracao = int(request.form.get('duracao', '0'))
@@ -1006,59 +980,60 @@ def modalidade_form(id_modalidade=None):
             ):
                 raise ValueError('Preencha nome, descrição e duração maior que zero.')
             con = conectar()
-            try:
-                if consultar(
-                    con,
+            if consultar(
+                con,
+                '''
+                    SELECT ID_MODALIDADE
+                    FROM MODALIDADES
+                    WHERE LOWER(TRIM(NOME))=?
+                        AND ID_MODALIDADE<>?
+                ''',
+                (nome.lower(), id_modalidade or 0),
+                True,
+            ):
+                raise ValueError('Modalidade já existe.')
+            valores = (
+                nome,
+                descricao,
+                duracao,
+                int(request.form.get('ativa', '1') == '1'),
+            )
+            if id_modalidade:
+                cursor = con.cursor()
+                cursor.execute(
                     '''
-                        SELECT ID_MODALIDADE
-                        FROM MODALIDADES
-                        WHERE LOWER(TRIM(NOME))=?
-                            AND ID_MODALIDADE<>?
+                        UPDATE MODALIDADES
+                        SET NOME=?,
+                            DESCRICAO=?,
+                            DURACAO=?,
+                            ATIVA=?
+                        WHERE ID_MODALIDADE=?
                     ''',
-                    (nome.lower(), id_modalidade or 0),
-                    True,
-                ):
-                    raise ValueError('Modalidade já existe.')
-                valores = (
-                    nome,
-                    descricao,
-                    duracao,
-                    int(request.form.get('ativa', '1') == '1'),
+                    (valores[0], valores[1], valores[2], valores[3], id_modalidade),
                 )
-                if id_modalidade:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            UPDATE MODALIDADES
-                            SET NOME=?,
-                                DESCRICAO=?,
-                                DURACAO=?,
-                                ATIVA=?
-                            WHERE ID_MODALIDADE=?
-                        ''',
-                        (valores[0], valores[1], valores[2], valores[3], id_modalidade),
-                    )
-                else:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            INSERT INTO MODALIDADES (NOME, DESCRICAO, DURACAO, ATIVA)
-                            VALUES (?,?,?,?)
-                        ''',
-                        valores,
-                    )
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+            else:
+                cursor = con.cursor()
+                cursor.execute(
+                    '''
+                        INSERT INTO MODALIDADES (NOME, DESCRICAO, DURACAO, ATIVA)
+                        VALUES (?,?,?,?)
+                    ''',
+                    valores,
+                )
+            con.commit()
             flash('Modalidade salva com sucesso!', 'sucesso')
             return redirect(url_for('modalidades'))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
         except fdb.IntegrityError:
+            if con is not None:
+                con.rollback()
             flash('Modalidade já existe.', 'erro')
+        finally:
+            if con is not None:
+                con.close()
     titulo = 'Nova modalidade'
     if id_modalidade:
         titulo = 'Editar Modalidade'
@@ -1295,62 +1270,64 @@ def aula_form(id_aula=None):
     finally:
         con.close()
     if request.method == 'POST':
+        con = None
         try:
             con = conectar()
-            try:
-                valores = validar_aula(con, id_aula)
-                if id_aula:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            UPDATE AULAS
-                            SET NOME=?,
-                                ID_MODALIDADE=?,
-                                ID_PROFESSOR=?,
-                                DATA_AULA=?,
-                                HORA_INICIO=?,
-                                HORA_FIM=?,
-                                CAPACIDADE=?,
-                                LOCAL_AULA=?
-                            WHERE ID_AULA=?
-                        ''',
-                        (
-                            valores[0],
-                            valores[1],
-                            valores[2],
-                            valores[3],
-                            valores[4],
-                            valores[5],
-                            valores[6],
-                            valores[7],
-                            id_aula,
-                        ),
-                    )
-                else:
-                    cursor = con.cursor()
-                    cursor.execute(
-                        '''
-                            INSERT INTO AULAS (NOME, ID_MODALIDADE, ID_PROFESSOR, DATA_AULA, HORA_INICIO, HORA_FIM, CAPACIDADE, LOCAL_AULA)
-                            VALUES (?,?,?,?,?,?,?,?)
-                        ''',
-                        valores,
-                    )
-                con.commit()
-            except Exception:
-                con.rollback()
-                raise
-            finally:
-                con.close()
+            valores = validar_aula(con, id_aula)
+            if id_aula:
+                cursor = con.cursor()
+                cursor.execute(
+                    '''
+                        UPDATE AULAS
+                        SET NOME=?,
+                            ID_MODALIDADE=?,
+                            ID_PROFESSOR=?,
+                            DATA_AULA=?,
+                            HORA_INICIO=?,
+                            HORA_FIM=?,
+                            CAPACIDADE=?,
+                            LOCAL_AULA=?
+                        WHERE ID_AULA=?
+                    ''',
+                    (
+                        valores[0],
+                        valores[1],
+                        valores[2],
+                        valores[3],
+                        valores[4],
+                        valores[5],
+                        valores[6],
+                        valores[7],
+                        id_aula,
+                    ),
+                )
+            else:
+                cursor = con.cursor()
+                cursor.execute(
+                    '''
+                        INSERT INTO AULAS (NOME, ID_MODALIDADE, ID_PROFESSOR, DATA_AULA, HORA_INICIO, HORA_FIM, CAPACIDADE, LOCAL_AULA)
+                        VALUES (?,?,?,?,?,?,?,?)
+                    ''',
+                    valores,
+                )
+            con.commit()
             flash('Aula salva com sucesso!', 'sucesso')
             return redirect(url_for('aulas'))
         except ValueError as erro:
+            if con is not None:
+                con.rollback()
             flash(str(erro), 'erro')
         except fdb.DatabaseError as erro:
+            if con is not None:
+                con.rollback()
             print('Erro ao salvar aula:', erro)
             flash(
                 'Não foi possível salvar: confira modalidade ativa, professor, horários e capacidade.',
                 'erro',
             )
+        finally:
+            if con is not None:
+                con.close()
     titulo = 'Criar aula'
     if id_aula:
         titulo = 'Editar aula'
@@ -1728,7 +1705,4 @@ def erro_banco(erro):
 
 # Inicia o sistema
 if __name__ == '__main__':
-    if preparar_conexao():
-        app.run()
-    else:
-        raise SystemExit(1)
+    app.run()

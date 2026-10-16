@@ -1,34 +1,31 @@
-AUTOMATIC FIT - EXECUCAO NO WINDOWS
+AUTOMATIC FIT - PROJETO DE CURSO
 
-1. Extraia o ZIP inteiro. BANCO.FDB, templates e static devem ficar junto de main.py.
+1. O banco esta configurado neste caminho:
+   C:\Users\Aluno\Downloads\projetofianal-main\BANCO.FDB
 
-2. Abra o terminal na pasta que contem main.py.
-   Se o ambiente virtual ja esta instalado, execute:
-   .\.venv\Scripts\python.exe main.py
+2. Abra main.py. No inicio do arquivo, procure a funcao conectar().
+   O usuario fica na linha user='SYSDBA'.
+   A senha fica na linha password='sysdba'.
+   Ajuste a senha para a que funciona na sua instalacao do Firebird.
+   Essa senha e do banco, nao da conta de aluno ou professor no site.
+   Se mover o banco para outra pasta, ajuste a linha database.
 
-   Se usa o Python instalado diretamente, instale as dependencias e execute:
+3. O Firebird precisa estar instalado e em execucao no seu computador.
+   Se as dependencias Python ainda nao estiverem instaladas, execute:
    python -m pip install Flask==3.1.2 fdb==2.0.4 Flask-Bcrypt==1.0.1
+
+4. Execute main.py pelo seu editor ou pelo terminal:
+   .\.venv\Scripts\python.exe main.py
+   Ou, se usa o Python diretamente:
    python main.py
 
-3. O programa testa a conexao antes de abrir o site.
-   Se o Firebird recusar o usuario ou a senha, o terminal pedira:
-   - Usuario do Firebird: Enter mantem o usuario mostrado (normalmente SYSDBA).
-   - Senha do Firebird: informe a senha definida na instalacao do banco.
-
-   A senha do Firebird NAO e a senha de login do site.
-   Digite a senha no terminal CMD ou PowerShell. A entrada fica oculta.
-   Os dados informados valem apenas para essa execucao; nao sao salvos em arquivo.
-   Se a segunda tentativa for recusada, o programa para e informa o erro.
-   Se voce nao sabe a senha, consulte quem instalou ou administra o Firebird.
-   O programa nao altera usuarios ou senhas do servidor Firebird.
-
-4. Depois da mensagem de servidor iniciado, abra no navegador:
+5. Abra no navegador:
    http://127.0.0.1:5000
 
-O Firebird deve estar instalado e em execucao no computador.
-A conexao esta na funcao conectar(), no inicio de main.py.
-As configuracoes DB_HOST, DB_USER e DB_PASSWORD do ambiente, se existentes,
-continuam sendo respeitadas. Se a conexao ja funciona, nada e perguntado.
+Nao ha variaveis de ambiente nem pergunta de senha no terminal.
+A conexao esta escrita diretamente na funcao conectar().
 
-Antes de atualizar uma versao em uso, preserve uma copia do seu banco local
-para nao substituir cadastros recentes pelo banco original do projeto.
+Os dados pessoais continuam obrigatorios. O CPF tem 11 numeros,
+o telefone com DDD tem 10 ou 11 numeros e o cadastro exige 18 anos completos.
+
+Ao atualizar o codigo, preserve seu BANCO.FDB para nao perder cadastros recentes.
