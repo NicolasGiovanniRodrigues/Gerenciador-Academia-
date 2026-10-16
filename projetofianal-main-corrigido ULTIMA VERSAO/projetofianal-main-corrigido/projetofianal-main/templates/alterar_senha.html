@@ -2,21 +2,21 @@
 {% block content %}
     <a class="back" href="{{ url_for('perfil') }}">← Voltar ao perfil</a>
     <h1>Alterar senha</h1>
-    <p class="subtitle">Atualize sua senha para manter sua conta protegida.</p>
+    <p class="subtitle">Atualize sua senha. Campos com * são obrigatórios.</p>
     <section class="card narrow">
         <h2>Defina sua nova senha</h2>
         <form method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-grid one">
                 <label>
-                    Senha atual
+                    Senha atual *
                     <input type="password"
                            name="senha_atual"
                            required
                            autocomplete="current-password">
                 </label>
                 <label>
-                    Nova senha
+                    Nova senha *
                     <input type="password"
                            name="nova_senha"
                            minlength="8"
@@ -24,7 +24,7 @@
                            autocomplete="new-password">
                 </label>
                 <label>
-                    Confirmar nova senha
+                    Confirmar nova senha *
                     <input type="password" name="confirmar" required autocomplete="new-password">
                 </label>
             </div>

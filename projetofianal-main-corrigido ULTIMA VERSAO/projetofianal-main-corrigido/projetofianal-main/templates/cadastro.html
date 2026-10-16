@@ -31,11 +31,12 @@
                      src="{{ url_for('static',filename='img/logo.png') }}"
                      alt="">
                 <h2>Crie sua conta</h2>
-                <p class="subtitle">Preencha os dados abaixo para começar.</p>
+                <p class="subtitle">Campos com * são obrigatórios. Preencha todos os dados.</p>
                 {% include "mensagens.html" %}
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">E-mail</span>
                         <span class="field-icon">✉</span>
                         <input type="email"
@@ -47,6 +48,7 @@
                                autocomplete="email">
                     </label>
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">Nome completo</span>
                         <span class="field-icon">♙</span>
                         <input name="nome"
@@ -57,33 +59,46 @@
                                value="{{ request.form.get('nome', '') }}">
                     </label>
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">Telefone</span>
                         <span class="field-icon">♧</span>
                         <input type="tel"
                                name="telefone"
-                               placeholder="Telefone"
-                               maxlength="20"
+                               placeholder="Telefone com DDD"
+                               maxlength="11"
+                               minlength="10"
+                               pattern="[0-9]{10,11}"
+                               inputmode="numeric"
+                               data-numeros="11"
+                               title="Digite o DDD e o telefone: 10 ou 11 números."
                                autocomplete="tel"
-                               value="{{ request.form.get('telefone', '') }}">
+                               value="{{ request.form.get('telefone', '') }}" required>
                     </label>
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">CPF</span>
                         <span class="field-icon">▤</span>
                         <input name="cpf"
-                               placeholder="CPF"
-                               maxlength="14"
+                               placeholder="CPF (11 números)"
+                               maxlength="11"
+                               minlength="11"
+                               pattern="[0-9]{11}"
+                               data-numeros="11"
+                               title="Digite exatamente 11 números, sem pontos ou traços."
                                required
                                inputmode="numeric"
                                value="{{ request.form.get('cpf', '') }}">
                     </label>
                     <label class="auth-date">
-                        Data de nascimento
+                        Data de nascimento *
                         <input type="date"
                                name="data_nascimento"
+                               max="{{ nascimento_maximo }}"
                                required
                                value="{{ request.form.get('data_nascimento', '') }}">
                     </label>
                     <label class="auth-field password-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">Senha</span>
                         <span class="field-icon">
                             <img src="{{ url_for('static',filename='img/cadeado.png') }}"
@@ -100,6 +115,7 @@
                         <button type="button" class="show-password" aria-label="Mostrar senha">◉</button>
                     </label>
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">Confirmar senha</span>
                         <span class="field-icon">
                             <img src="{{ url_for('static',filename='img/cadeado.png') }}"
@@ -114,6 +130,7 @@
                                autocomplete="new-password"
                                required>
                     </label>
+                    <p class="help">Cadastro permitido a partir de 18 anos completos.</p>
                     <p class="help">Mínimo de 8 caracteres: maiúscula, minúscula, número e símbolo.</p>
                     <button class="button primary full" type="submit">Cadastrar-se</button>
                     <p class="auth-link">

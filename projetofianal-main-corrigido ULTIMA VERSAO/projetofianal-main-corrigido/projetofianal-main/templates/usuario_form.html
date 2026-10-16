@@ -27,28 +27,38 @@
                            value="{{ request.form.get('email',pessoa.email|default('')) }}">
                 </label>
                 <label>
-                    Telefone
+                    Telefone *
                     <input name="telefone"
                            type="tel"
-                           maxlength="20"
-                           value="{{ request.form.get('telefone',pessoa.telefone|default('',true)) }}">
+                           maxlength="11"
+                           minlength="10"
+                           pattern="[0-9]{10,11}"
+                           inputmode="numeric"
+                           data-numeros="11"
+                           title="Digite o DDD e o telefone: 10 ou 11 números."
+                           value="{{ request.form.get('telefone',pessoa.telefone|default('',true)) }}" required>
                 </label>
                 <label>
-                    CPF
+                    CPF *
                     <input name="cpf"
-                           maxlength="14"
-                           value="{{ request.form.get('cpf',pessoa.cpf|default('',true)) }}">
+                           maxlength="11"
+                           minlength="11"
+                           pattern="[0-9]{11}"
+                           data-numeros="11"
+                           title="Digite exatamente 11 números, sem pontos ou traços."
+                           value="{{ request.form.get('cpf',pessoa.cpf|default('',true)) }}" required inputmode="numeric">
                 </label>
                 <label>
-                    Data de nascimento
+                    Data de nascimento *
                     <input type="date"
                            name="data_nascimento"
-                           value="{{ request.form.get('data_nascimento',pessoa.data_nascimento|string if pessoa.data_nascimento else '') }}">
+                           max="{{ nascimento_maximo }}"
+                           value="{{ request.form.get('data_nascimento',pessoa.data_nascimento|string if pessoa.data_nascimento else '') }}" required>
                 </label>
                 {% if not proprio %}
                     <label>
                         Perfil *
-                        <select name="tipo_usuario">
+                        <select name="tipo_usuario" required>
                             {% for cod,rotulo in perfis.items() %}
                                 <option value="{{ cod }}"
                                         {{ 'selected' if request.form.get('tipo_usuario',pessoa.tipo_usuario|default(request.args.get('perfil','ALUNO')))==cod else '' }}>
@@ -58,8 +68,8 @@
                         </select>
                     </label>
                     <label>
-                        Situação
-                        <select name="ativo">
+                        Situação *
+                        <select name="ativo" required>
                             <option value="1"
                                     {{ 'selected' if request.form.get('ativo',pessoa.ativo|default(1)|string)=='1' else '' }}>
                                 Ativo
@@ -71,8 +81,8 @@
                         </select>
                     </label>
                     <label>
-                        Bloqueio de login
-                        <select name="bloqueado">
+                        Bloqueio de login *
+                        <select name="bloqueado" required>
                             <option value="0"
                                     {{ 'selected' if request.form.get('bloqueado',pessoa.bloqueado|default(0)|string)=='0' else '' }}>
                                 Liberado
@@ -84,10 +94,14 @@
                         </select>
                     </label>
                     <label>
-                        Tentativas de login
+                        Tentativas de login *
                         <input name="tentativas_login"
                                type="number"
                                min="0"
+                               max="2147483647"
+                               step="1"
+                               data-inteiro
+                               required
                                value="{{ request.form.get('tentativas_login',pessoa.tentativas_login|default(0)) }}">
                     </label>
                     <label>

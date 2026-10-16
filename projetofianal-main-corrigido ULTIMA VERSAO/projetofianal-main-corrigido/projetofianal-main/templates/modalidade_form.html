@@ -26,13 +26,15 @@
                     <input type="number"
                            name="duracao"
                            min="1"
+                           max="2147483647"
+                           data-inteiro
                            step="1"
                            required
                            value="{{ request.form.get('duracao',item.duracao|default(50)) }}">
                 </label>
                 <label>
-                    Situação
-                    <select name="ativa">
+                    Situação *
+                    <select name="ativa" required>
                         <option value="1"
                                 {{ 'selected' if request.form.get('ativa',item.ativa|default(1)|string)=='1' else '' }}>
                             Ativa

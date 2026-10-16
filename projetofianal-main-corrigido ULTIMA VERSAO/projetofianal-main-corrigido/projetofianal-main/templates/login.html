@@ -32,11 +32,12 @@
                      alt="">
                 <h2>Bem-vindo</h2>
                 <h2>Automatic Fit</h2>
-                <p class="subtitle">Faça seu login para acessar sua conta.</p>
+                <p class="subtitle">Faça seu login para acessar sua conta. Campos com * são obrigatórios.</p>
                 {% include "mensagens.html" %}
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <label class="auth-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">E-mail</span>
                         <span class="field-icon">✉</span>
                         <input type="email"
@@ -48,6 +49,7 @@
                                autocomplete="email">
                     </label>
                     <label class="auth-field password-field">
+                        <span class="required-mark" aria-hidden="true">*</span>
                         <span class="sr-only">Senha</span>
                         <span class="field-icon">
                             <img src="{{ url_for('static',filename='img/cadeado.png') }}"

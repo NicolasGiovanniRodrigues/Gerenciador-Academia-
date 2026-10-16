@@ -1170,3 +1170,15 @@ small {
 .nav-icon {
     vertical-align: middle
 }
+/* Asterisco dos campos obrigatórios nas telas de login e cadastro. */
+.auth-field .required-mark {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    color: #a61d4c;
+    font-weight: bold;
+}
+
+.password-field .required-mark {
+    right: 44px;
+}
